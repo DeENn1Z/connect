@@ -15,6 +15,7 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
+            padding: 20px;
             text-align: center;
         }
         .loader {
@@ -28,8 +29,8 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .btn {
-            display: none; /* Скрыта по умолчанию */
-            margin-top: 20px;
+            display: none;
+            margin-top: 15px;
             padding: 12px 24px;
             background-color: #007AFF;
             color: white;
@@ -37,44 +38,80 @@
             border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
+            width: 100%;
+            max-width: 300px;
+            box-sizing: border-box;
+        }
+        .btn-secondary {
+            background-color: #333;
+            margin-top: 10px;
+        }
+        #error-debug {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #888;
+            word-break: break-all;
+            display: none;
         }
     </style>
     <script>
         window.onload = function() {
-            // 1. Получаем параметры из ссылки, которую дал бот
             const params = new URLSearchParams(window.location.search);
-            const subUrl = params.get('url'); // Ссылка на подписку
-            const app = params.get('app');    // Тип приложения (happ или v2raytun)
-            const name = "TigoVPN";           // Имя подписки в приложении
+            const subUrl = params.get('url'); 
+            const app = params.get('app');    
+            const name = "TigoVPN";           
 
             if (!subUrl || !app) {
-                document.getElementById('status').innerText = "Ошибка: Неверная ссылка.";
+                document.getElementById('status').innerText = "Ошибка: Ссылка повреждена.";
                 return;
             }
 
             let deepLink = "";
 
-            // 2. Формируем команду для телефона
+            // --- ОБНОВЛЕННАЯ ЛОГИКА ---
+            // Используем команду 'import' вместо 'install-sub'
             if (app === 'happ') {
-                // Схема для Happ Proxy (iOS)
-                deepLink = `happ://install-sub?url=${encodeURIComponent(subUrl)}&name=${name}`;
+                // Для Happ Proxy (iOS)
+                deepLink = `happ://import?url=${encodeURIComponent(subUrl)}&name=${encodeURIComponent(name)}`;
             } else if (app === 'v2raytun') {
-                // Схема для V2RayTun (Android)
-                deepLink = `v2raytun://install-sub?url=${encodeURIComponent(subUrl)}&name=${name}`;
+                // Для V2RayTun (Android)
+                deepLink = `v2raytun://import?url=${encodeURIComponent(subUrl)}&name=${encodeURIComponent(name)}`;
             }
 
-            // 3. Пытаемся открыть приложение
+            // Показываем отладочную инфу (если вдруг не сработает)
+            const debugEl = document.getElementById('error-debug');
+            debugEl.innerText = "Target: " + deepLink;
+            
             if (deepLink) {
                 document.getElementById('status').innerText = "Запускаю приложение...";
+                
+                // Пытаемся открыть
                 window.location.href = deepLink;
 
-                // 4. Если не открылось автоматически, показываем кнопку
+                // Если не открылось через 1.5 секунды, показываем кнопки
                 setTimeout(() => {
-                    document.getElementById('status').innerText = "Не открылось автоматически?";
+                    document.getElementById('status').innerText = "Не сработало автоматически?";
+                    document.querySelector('.loader').style.display = 'none';
+                    
+                    // Кнопка "Попробовать снова"
                     const btn = document.getElementById('manualBtn');
                     btn.style.display = "inline-block";
+                    btn.innerText = "Открыть приложение";
                     btn.href = deepLink;
-                }, 1000);
+
+                    // Кнопка "Скопировать" (План Б)
+                    const copyBtn = document.getElementById('copyBtn');
+                    copyBtn.style.display = "inline-block";
+                    copyBtn.onclick = function() {
+                        navigator.clipboard.writeText(subUrl).then(() => {
+                            copyBtn.innerText = "Скопировано!";
+                            setTimeout(() => copyBtn.innerText = "Скопировать ссылку вручную", 2000);
+                        });
+                        return false; 
+                    };
+                    
+                    debugEl.style.display = "block"; // Показать тех. инфо
+                }, 1500);
             }
         }
     </script>
@@ -82,6 +119,11 @@
 <body>
     <div class="loader"></div>
     <div id="status">Подключение...</div>
+    
+    <!-- Кнопки появятся, если авто-запуск не сработает -->
     <a id="manualBtn" class="btn" href="#">Открыть вручную</a>
+    <a id="copyBtn" class="btn btn-secondary" href="#">Скопировать ссылку вручную</a>
+    
+    <div id="error-debug"></div>
 </body>
 </html>
