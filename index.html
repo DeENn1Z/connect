@@ -73,8 +73,8 @@
                 // Happ Proxy (iOS/Android): использует формат add/URL
                 deepLink = `happ://add/${subUrl}`;
             } else if (app === 'v2raytun') {
-                // V2RayTun (Android): стандартная команда install-sub
-                deepLink = `v2raytun://install-sub?url=${encodeURIComponent(subUrl)}&name=${encodeURIComponent(name)}`;
+                // V2RayTun (Android): используем команду import
+                deepLink = `v2raytun://import?url=${encodeURIComponent(subUrl)}&name=${encodeURIComponent(name)}`;
             }
 
             // Отладка
